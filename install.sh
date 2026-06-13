@@ -83,7 +83,6 @@ install_base() {
     fi
 }
 
-# 0: running, 1: not running, 2: not installed
 check_status() {
     if [[ ! -f /etc/systemd/system/XrayR.service ]]; then
         return 2
@@ -101,6 +100,7 @@ install_acme() {
 }
 
 install_XrayR() {
+
     if [[ -e /usr/local/XrayR/ ]]; then
         rm /usr/local/XrayR/ -rf
     fi
@@ -108,26 +108,31 @@ install_XrayR() {
     mkdir /usr/local/XrayR/ -p
     cd /usr/local/XrayR/
 
-    # ===== FIX: 固定版本 + 固定仓库 =====
+    # =========================
+    # 🔥 改成你的 repo + 0.9.4
+    # =========================
     last_version="0.9.4"
 
-    echo -e "开始安装 XrayR v$last_version"
+    echo -e "检测到 XrayR 版本：${last_version}，开始安装"
 
     wget -N --no-check-certificate -O /usr/local/XrayR/XrayR-linux.zip \
     https://github.com/kt-raw/toolbox/releases/download/${last_version}/XrayR-linux-${arch}.zip
 
     if [[ $? -ne 0 ]]; then
-        echo -e "${red}下载 XrayR v${last_version} 失败，请确保 release 存在${plain}"
+        echo -e "${red}下载失败，请检查 release 文件是否存在（0.9.4）${plain}"
         exit 1
     fi
 
     unzip XrayR-linux.zip
     rm XrayR-linux.zip -f
     chmod +x XrayR
+
     mkdir /etc/XrayR/ -p
+
     rm /etc/systemd/system/XrayR.service -f
     file="https://raw.githubusercontent.com/Reiyy/XrayR-script/master/XrayR.service"
     wget -N --no-check-certificate -O /etc/systemd/system/XrayR.service ${file}
+
     systemctl daemon-reload
     systemctl stop XrayR
     systemctl enable XrayR
@@ -139,17 +144,14 @@ install_XrayR() {
 
     if [[ ! -f /etc/XrayR/config.yml ]]; then
         cp config.yml /etc/XrayR/
-        echo -e ""
-        echo -e "全新安装，请先参看教程：https://github.com/XrayR-project/XrayR，配置必要的内容"
     else
         systemctl start XrayR
         sleep 2
         check_status
-        echo -e ""
         if [[ $? == 0 ]]; then
             echo -e "${green}XrayR 重启成功${plain}"
         else
-            echo -e "${red}XrayR 可能启动失败，请稍后使用 XrayR log 查看日志信息，若无法启动，则可能更改了配置格式，请前往 wiki 查看：https://github.com/XrayR-project/XrayR/wiki${plain}"
+            echo -e "${red}XrayR 启动失败，请检查配置${plain}"
         fi
     fi
 
@@ -163,6 +165,9 @@ install_XrayR() {
         cp custom_outbound.json /etc/XrayR/
     fi
 
+    # =========================
+    # 管理脚本（保留你原来的）
+    # =========================
     curl -o /usr/bin/XrayR -Ls https://raw.githubusercontent.com/Reiyy/XrayR-script/master/XrayR.sh
     chmod +x /usr/bin/XrayR
     ln -s /usr/bin/XrayR /usr/bin/xrayr
