@@ -129,9 +129,30 @@ install_XrayR() {
 
     mkdir /etc/XrayR/ -p
 
-    rm /etc/systemd/system/XrayR.service -f
-    file="https://raw.githubusercontent.com/Reiyy/XrayR-script/master/XrayR.service"
-    wget -N --no-check-certificate -O /etc/systemd/system/XrayR.service ${file}
+    rm -f /etc/systemd/system/XrayR.service
+
+    cat > /etc/systemd/system/XrayR.service <<EOF
+    [Unit]
+    Description=XrayR Service
+    After=network.target nss-lookup.target
+    Wants=network.target
+    
+    [Service]
+    User=root
+    Group=root
+    Type=simple
+    LimitAS=infinity
+    LimitRSS=infinity
+    LimitCORE=infinity
+    LimitNOFILE=999999
+    WorkingDirectory=/usr/local/XrayR/
+    ExecStart=/usr/local/XrayR/XrayR -c /etc/XrayR/config.yml
+    Restart=on-failure
+    RestartSec=10
+    
+    [Install]
+    WantedBy=multi-user.target
+    EOF
 
     systemctl daemon-reload
     systemctl stop XrayR
